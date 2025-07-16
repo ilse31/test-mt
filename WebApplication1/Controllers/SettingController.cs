@@ -1,12 +1,10 @@
-
 using Microsoft.AspNetCore.Mvc;
-using Models;
-using Repository;
+using WebApplication1.Models;
 using System.Net;
+using Microsoft.Extensions.Configuration;
 
-
-namespace Controllers
-{
+namespace WebApplication1.Controllers
+    {
     [Route("api/[controller]")]
     [ApiController]
     public class SettingController : ControllerBase

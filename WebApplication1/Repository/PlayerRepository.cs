@@ -1,64 +1,65 @@
-using Models;
+using Dapper;
+using Npgsql;
+using System.Text.Json;
+using System.IO;
+using WebApplication1.Data;
+using WebApplication1.Models;
+using WebApplication1.Services;
+using Microsoft.EntityFrameworkCore;
 
-namespace Repository
+namespace WebApplication1.Repository
 {
     public class PlayerRepository : IPlayerRepository
     {
-        private readonly List<Player> _players;
+        private readonly ApplicationDbContext _context;
+        private readonly QueryService _queryService;
+        private readonly ConnectionService _connectionService;
 
-        public PlayerRepository()
+        public PlayerRepository(ApplicationDbContext context, QueryService queryService, ConnectionService connectionService)
         {
-            _players = new List<Player>
+            _context = context;
+            _queryService = queryService;
+            _connectionService = connectionService;
+        }
+
+        public async Task<IEnumerable<Player>> GetPlayersAsync(string? birthplace)
+        {
+            return await _context.Players
+                .Where(p => string.IsNullOrEmpty(birthplace) || p.BirthPlace == birthplace)
+                .ToListAsync();
+        }
+
+        public async Task<Player?> GetPlayerAsync(int id)
+        {
+            return await _context.Players.FindAsync(id);
+        }
+
+        public async Task AddPlayerAsync(Player player)
+        {
+            await _context.Players.AddAsync(player);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task UpdatePlayerAsync(Player player)
+        {
+            await _context.ExecuteInTransactionAsync(async () => 
             {
-                new Player { Id = 1, Name = "Cristiano Ronaldo", Age = 38, BirthPlace = "Europe" },
-                new Player { Id = 2, Name = "Lionel Messi", Age = 36, BirthPlace = "South America" },
-                new Player { Id = 3, Name = "Karim Benzema", Age = 35, BirthPlace = "Europe" },
-                new Player { Id = 4, Name = "Erling Haaland", Age = 23, BirthPlace = "Europe" },
-                new Player { Id = 5, Name = "Kylian Mbappe", Age = 24, BirthPlace = "Europe" }
-            };
+                _context.Players.Update(player);
+                await _context.SaveChangesAsync();
+            });
         }
 
-
-        public IEnumerable<Player> GetPlayers(string birthplace)
+        public async Task DeletePlayerAsync(int id)
         {
-            if (string.IsNullOrEmpty(birthplace))
+            await _context.ExecuteInTransactionAsync(async () => 
             {
-                return _players;
-            }
-
-            return _players.Where(p => p.BirthPlace.ToLower() == birthplace.ToLower());
-        }
-
-        public Player GetPlayer(int id)
-        {
-            return _players.FirstOrDefault(p => p.Id == id);
-        }
-
-        public void AddPlayer(Player player)
-        {
-            player.Id = _players.Max(p => p.Id) + 1;
-            _players.Add(player);
-        }
-
-
-        public void UpdatePlayer(Player player)
-        {
-            var existingPlayer = _players.FirstOrDefault(p => p.Id == player.Id);
-            if (existingPlayer != null)
-            {
-                existingPlayer.Name = player.Name;
-                existingPlayer.Age = player.Age;
-                existingPlayer.BirthPlace = player.BirthPlace;
-            }
-        }
-
-        public void DeletePlayer(int id)
-        {
-            var player = _players.FirstOrDefault(p => p.Id == id);
-            if (player != null)
-            {
-                _players.Remove(player);
-            }
+                var player = await _context.Players.FindAsync(id);
+                if (player != null)
+                {
+                    _context.Players.Remove(player);
+                    await _context.SaveChangesAsync();
+                }
+            });
         }
     }
 }

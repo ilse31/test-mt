@@ -12,7 +12,8 @@
             "stopAtEntry": false,
             "serverReadyAction": {
                 "action": "openExternally",
-                "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
+                "pattern": "\\bNow listening on:\\s+(https?://\\S+)",
+                "uriFormat": "%s/swagger/index.html"
             },
             "env": {
                 "ASPNETCORE_ENVIRONMENT": "Development"
@@ -22,11 +23,6 @@
             }
         },
         {
-            "name": ".NET Core Attach",
-            "type": "coreclr",
-            "request": "attach"
-        },
-        {
             "name": "Containers: .NET Launch",
             "type": "docker",
             "request": "launch",
@@ -34,6 +30,19 @@
             "netCore": {
                 "appProject": "${workspaceFolder}/WebApplication1/WebApplication1.csproj"
             }
+        },
+        {
+            "name": ".NET Core Debugger (launch) dotRush",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "${command:dotrush.activeTargetPath}",
+            "preLaunchTask": "dotrush: Build"
+        },
+        {
+            "name": ".NET Core Debugger (attach) dotRush",
+            "type": "coreclr",
+            "request": "attach",
+            "processId": "${command:dotrush.pickProcess}"
         }
     ]
 }

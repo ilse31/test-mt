@@ -1,5 +1,8 @@
+using Microsoft.EntityFrameworkCore;
 using Models;
-using Repository;
+using WebApplication1.Data;
+using WebApplication1.Repository;
+using WebApplication1.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,24 +10,62 @@ var builder = WebApplication.CreateBuilder(args);
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddSingleton<ConnectionService>();
+
+// Enhanced DbContext registration
+builder.Services.AddDbContext<ApplicationDbContext>((provider, options) => 
+{
+    var logger = provider.GetService<ILogger<ApplicationDbContext>>();
+    
+    options.UseNpgsql(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        npgsqlOptions => 
+        {
+            // Connection resiliency
+            npgsqlOptions.EnableRetryOnFailure(
+                maxRetryCount: 5,
+                maxRetryDelay: TimeSpan.FromSeconds(30),
+                errorCodesToAdd: null);
+                
+            // Command timeout
+            npgsqlOptions.CommandTimeout(30);
+        });
+        
+    // Enable detailed errors and sensitive data logging in development
+    if (builder.Environment.IsDevelopment())
+    {
+        options.EnableDetailedErrors();
+        options.EnableSensitiveDataLogging();
+    }
+});
+
 builder.Services.AddScoped<IPlayerRepository, PlayerRepository>();
+
+builder.Services.AddSingleton<QueryService>(_ => 
+    new QueryService(Path.Combine(AppContext.BaseDirectory, "Repository/queries.json")));
+
 builder.Services.AddControllers(
     options =>
     {
         options.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes = true;
     }
 );
+
 var app = builder.Build();
+
+// Add error handling middleware
+app.UseMiddleware<WebApplication1.Middleware.DatabaseErrorHandlerMiddleware>();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.MapControllers();
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
+
+app.MapControllers();
 
 var summaries = new[]
 {

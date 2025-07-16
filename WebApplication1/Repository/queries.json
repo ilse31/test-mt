@@ -1,0 +1,12 @@
+{
+  "Player": {
+    "AddPlayer": "INSERT INTO Players (Name, Email, CreatedAt) VALUES (@Name, @Email, @CreatedAt)",
+    "GetPlayerById": "SELECT * FROM Players WHERE Id = @Id",
+    "UpdatePlayer": "UPDATE Players SET Name = @Name, Email = @Email WHERE Id = @Id",
+    "DeletePlayer": "DELETE FROM Players WHERE Id = @Id"
+  },
+  "Example": {
+    "GetAll": "SELECT * FROM Examples",
+    "Search": "SELECT * FROM Examples WHERE Name LIKE '%@SearchTerm%'"
+  }
+}

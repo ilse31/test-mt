@@ -1,13 +1,13 @@
-using Models;
+using WebApplication1.Models;
 
-namespace Repository
+namespace WebApplication1.Repository
 {
     public interface IPlayerRepository
     {
-        IEnumerable<Player> GetPlayers(string birthplace);
-        Player GetPlayer(int id);
-        void AddPlayer(Player player);
-        void UpdatePlayer(Player player);
-        void DeletePlayer(int id);
+        Task<IEnumerable<Player>> GetPlayersAsync(string? birthplace);
+        Task<Player?> GetPlayerAsync(int id);
+        Task AddPlayerAsync(Player player);
+        Task UpdatePlayerAsync(Player player);
+        Task DeletePlayerAsync(int id);
     }
 }
